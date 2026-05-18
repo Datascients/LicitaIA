@@ -15,7 +15,7 @@ load_dotenv()
 
 INDEX_NAME = os.environ.get("PINECONE_INDEX_NAME", "licitaia-docs")
 K_RESULTS = 5
-MIN_SCORE = 0.72
+MIN_SCORE = 0.60
 ALPHA_KNN = 0.7      # peso KNN por defecto
 ALPHA_BM25 = 0.3     # peso BM25 por defecto
 
