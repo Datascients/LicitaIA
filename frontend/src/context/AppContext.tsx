@@ -57,19 +57,37 @@ function loadEmpresaFromStorage(email: string): EmpresaForm | null {
 function loadRegistry(): EmpresaForm[] {
   try {
     const raw = localStorage.getItem(REGISTRY_KEY);
-    return raw ? (JSON.parse(raw) as EmpresaForm[]) : [];
+    const registry: EmpresaForm[] = raw ? (JSON.parse(raw) as EmpresaForm[]) : [];
+    const seenIds = new Set(registry.map(e => e.id));
+
+    // Migrar empresas antiguas almacenadas por email individual
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('licitaia_empresa_')) continue;
+      try {
+        const emp = JSON.parse(localStorage.getItem(key)!) as EmpresaForm;
+        if (emp?.id && !seenIds.has(emp.id)) {
+          registry.push(emp);
+          seenIds.add(emp.id);
+        }
+      } catch { /* clave corrupta, ignorar */ }
+    }
+
+    return registry;
   } catch {
     return [];
   }
 }
 
 function saveToRegistry(emp: EmpresaForm): EmpresaForm[] {
-  const registry = loadRegistry();
+  // Cargar sin migración para evitar loop (ya estamos dentro de una escritura)
+  const raw = localStorage.getItem(REGISTRY_KEY);
+  const registry: EmpresaForm[] = raw ? (JSON.parse(raw) as EmpresaForm[]) : [];
   const idx = registry.findIndex(e => e.id === emp.id);
   if (idx >= 0) registry[idx] = emp;
   else registry.push(emp);
   localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
-  return registry;
+  return loadRegistry(); // devolver con migración para mantener estado completo
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -85,6 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     emailRef.current = u.email;
     const saved = loadEmpresaFromStorage(u.email);
     setEmpresa(saved);
+    // loadRegistry ya escanea y migra todas las claves licitaia_empresa_*
     setAllEmpresas(loadRegistry());
   };
 
