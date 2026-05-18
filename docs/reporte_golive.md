@@ -1,93 +1,171 @@
 # Reporte Go-Live — LicitaIA
-Fecha: 2026-05-17 | Deploy: Railway (reemplaza GCP Cloud Run)
-
-## 1. URL Pública del Agente
-
-```
-https://licitaia-production.up.railway.app
-```
-
-> Reemplazar con la URL real asignada por Railway tras el primer deploy.
-> Endpoint principal: `POST /query`
-> Health check: `GET /` → `{"status": "ok"}`
+Fecha: 2026-05-18 | Deploy: Railway (backend) + Netlify (frontend)
 
 ---
 
-## 2. Latencia Promedio — 5 Pruebas Post-Deploy
+## URLs del Sistema
 
-| # | Query de Prueba | Latencia (ms) | Worker Usado | Confianza |
-|---|---|---|---|---|
-| 1 | POST /query: "¿qué documentos necesito para postular al concurso de limpieza del MINSAL?" | ~2.100 | worker_semantic_bases | 0.88 |
-| 2 | POST /query: "¿puedo postular si tengo deudas previsionales de hace 2 meses?" | ~1.850 | worker_semantic_general | 0.91 |
-| 3 | POST /eligibility: empresa TecnoServ vs Concurso-001 | ~3.200 | worker_checklist | 0.85 |
-| 4 | GET /concursos: verificar semáforo de fechas | ~180 | — (SQL directo) | — |
-| 5 | GET /admin/empresas: datos de empresas mock | ~210 | — (SQL directo) | — |
-
-**Latencia promedio P50 (consultas RAG):** ~2.400 ms
-**Latencia promedio P95 (consultas RAG):** ~5.800 ms
-**Latencia promedio endpoints SQL:** ~200 ms
+| Servicio | URL |
+|---|---|
+| **Frontend (Netlify)** | https://licitaia-7a9a89.netlify.app |
+| **Backend API (Railway)** | https://licitaia-production-4e54.up.railway.app |
+| **API Docs (Swagger)** | https://licitaia-production-4e54.up.railway.app/docs |
+| **Repositorio GitHub** | https://github.com/Datascients/LicitaIA |
 
 ---
 
-## 3. Tokens Promedio por Consulta
+## Stack Tecnológico Real
+
+| Componente | Tecnología |
+|---|---|
+| LLM principal | OpenAI GPT-4o |
+| Embeddings | OpenAI text-embedding-3-small (1.536 dims) |
+| Vector DB | Pinecone Serverless (AWS us-east-1) |
+| Base de datos | Supabase (PostgreSQL) |
+| Backend | FastAPI + Uvicorn (Python 3.11) |
+| Frontend | React 19 + TypeScript + Vite 8 + Tailwind CSS v4 |
+| Deploy backend | Railway (Dockerfile, auto-deploy desde GitHub) |
+| Deploy frontend | Netlify (build desde `frontend/`, SPA routing) |
+
+---
+
+## Documentos Indexados en Pinecone
+
+| Archivo | Chunks | Namespace |
+|---|---|---|
+| Reglamento de la Ley 19886.pdf | 283 | `bases-generales` |
+| Bases Tipo Adquisición de Vehículos Motorizados.pdf | 390 | `bases-concurso-001` |
+| Manual-de-Compras-DCCP.pdf | 355 | `registro-proveedores` |
+| politica_inhabilitaciones.txt | 15 | `inhabilitaciones` |
+| **Total** | **1.043 chunks** | |
+
+---
+
+## 5 Preguntas de Prueba Post-Deploy
+
+Las siguientes consultas deben ejecutarse contra `POST /query` con un `empresa_id` y `concurso_id` válidos de Supabase. Registrar latencia y tokens reales de la respuesta del sistema.
+
+### Pregunta 1 — worker_semantic_bases
+**Query:** `"¿Qué requisitos técnicos deben cumplir los vehículos motorizados ofertados según las bases del concurso?"`
+**Worker esperado:** `worker_semantic_bases`
+**Namespace:** `bases-concurso-001`
 
 | Métrica | Valor |
 |---|---|
-| Tokens input promedio | 1.180 tokens |
-| Tokens output promedio | 380 tokens |
-| Total tokens por consulta | ~1.560 tokens |
-| Contexto RAG promedio (5 chunks × ~200 tokens) | ~1.000 tokens |
-| System prompt + query + overhead | ~180 tokens |
+| Latencia (ms) | _completar_ |
+| Tokens input | _completar_ |
+| Tokens output | _completar_ |
+| Confianza fiscalizador | _completar_ |
+| Fuente citada | _completar_ |
 
 ---
 
-## 4. Costo Estimado por 1.000 Consultas
+### Pregunta 2 — worker_semantic_general (inhabilitaciones)
+**Query:** `"¿Cuáles son las causales de inhabilidad para postular a una licitación según la Ley 19.886?"`
+**Worker esperado:** `worker_semantic_general`
+**Namespace:** `inhabilitaciones` + `bases-generales`
 
-```
-Fórmula:
-  tokens × precio Anthropic
-  + Pinecone queries × precio
-  + Railway compute (prorrateado)
-
-Desglose:
-  Claude Sonnet 4.6 — Input:
-    1.000 × 1.180 tokens × $3.00 / 1.000.000 = $3.54
-
-  Claude Sonnet 4.6 — Output:
-    1.000 × 380 tokens × $15.00 / 1.000.000 = $5.70
-
-  OpenAI text-embedding-3-small:
-    1.000 × 512 tokens × $0.02 / 1.000.000 = $0.01
-
-  Pinecone queries:
-    1.000 × $0.001 = $1.00
-
-  Railway Plan Hobby ($5/mes fijo):
-    Prorrateado por 1.000 consultas sobre ~10.000 mensuales = $0.50
-
-  TOTAL ESTIMADO POR 1.000 CONSULTAS: ~ $10.75 USD
-
-  (vs GCP Cloud Run estimado: $10.68 USD — diferencia mínima,
-   Railway elimina la complejidad operacional de IAM, Secret Manager,
-   service accounts y Container Registry)
-```
+| Métrica | Valor |
+|---|---|
+| Latencia (ms) | _completar_ |
+| Tokens input | _completar_ |
+| Tokens output | _completar_ |
+| Confianza fiscalizador | _completar_ |
+| Fuente citada | _completar_ |
 
 ---
 
-## 5. Mejoras Técnicas Prioritarias Identificadas en Go-Live
+### Pregunta 3 — worker_semantic_general (registro proveedores)
+**Query:** `"¿Qué documentos necesito para inscribirme en ChileProveedores y mantener mi registro vigente?"`
+**Worker esperado:** `worker_semantic_general`
+**Namespace:** `registro-proveedores`
+
+| Métrica | Valor |
+|---|---|
+| Latencia (ms) | _completar_ |
+| Tokens input | _completar_ |
+| Tokens output | _completar_ |
+| Confianza fiscalizador | _completar_ |
+| Fuente citada | _completar_ |
+
+---
+
+### Pregunta 4 — worker_semantic_bases (penalidades)
+**Query:** `"¿Qué penalidades aplica el organismo comprador si no cumplo el plazo de entrega de los vehículos?"`
+**Worker esperado:** `worker_semantic_bases`
+**Namespace:** `bases-concurso-001`
+
+| Métrica | Valor |
+|---|---|
+| Latencia (ms) | _completar_ |
+| Tokens input | _completar_ |
+| Tokens output | _completar_ |
+| Confianza fiscalizador | _completar_ |
+| Fuente citada | _completar_ |
+
+---
+
+### Pregunta 5 — worker_sql_historial (elegibilidad)
+**Query:** `"¿Califica mi empresa para postular al concurso? ¿Qué requisitos me faltan cumplir?"`
+**Worker esperado:** `worker_sql_historial`
+**Fuente:** Supabase (tabla `empresas` + `postulaciones`)
+
+| Métrica | Valor |
+|---|---|
+| Latencia (ms) | _completar_ |
+| Tokens input | _completar_ |
+| Tokens output | _completar_ |
+| Confianza fiscalizador | _completar_ |
+| Califica (bool) | _completar_ |
+
+---
+
+## Resumen de Métricas Post-Pruebas
+
+| Métrica | Valor |
+|---|---|
+| Latencia promedio RAG (ms) | _completar tras 5 pruebas_ |
+| Latencia promedio SQL (ms) | _completar tras 5 pruebas_ |
+| Tokens input promedio | _completar_ |
+| Tokens output promedio | _completar_ |
+| Confianza fiscalizador promedio | _completar_ |
+
+---
+
+## Costo Estimado por 1.000 Consultas
+
+Basado en precios GPT-4o (mayo 2026):
+
+| Componente | Cálculo | Costo USD |
+|---|---|---|
+| GPT-4o — Input | 1.000 × 1.200 tokens × $2.50/MTok | $3.00 |
+| GPT-4o — Output | 1.000 × 400 tokens × $10.00/MTok | $4.00 |
+| OpenAI Embeddings (text-embedding-3-small) | 1.000 × 512 tokens × $0.02/MTok | $0.01 |
+| Pinecone queries | 1.000 × $0.001 | $1.00 |
+| Railway Plan Hobby ($5/mes, ~10.000 consultas/mes) | prorrateado | $0.50 |
+| Netlify (free tier) | 0 | $0.00 |
+| **Total estimado** | | **~$8.51 USD** |
+
+---
+
+## Mejoras Técnicas Prioritarias
 
 ### Mejora 1 — Namespace Routing Inteligente (Prioridad Alta)
 
-**Problema:** `worker_semantic_general` consulta los 4 namespaces en paralelo en cada llamada, aunque la query pertenezca claramente a un solo dominio. Esto genera 4× el costo en Pinecone y aumenta la latencia ~400ms.
+**Problema:** `worker_semantic_general` consulta los 4 namespaces de Pinecone en cada llamada, aunque la query pertenezca claramente a un solo dominio. Esto multiplica el costo en Pinecone y suma ~400ms de latencia.
 
-**Solución:** Clasificador liviano con similitud coseno contra etiquetas fijas (`"inhabilitaciones"`, `"clasificación PYME"`, `"registro proveedores"`, `"ley general"`) que decide el namespace antes de buscar. Reducción estimada: 60% en costo Pinecone, 30% en latencia.
+**Solución:** Clasificador liviano con similitud coseno contra etiquetas fijas (`"inhabilitaciones"`, `"clasificación PYME"`, `"registro proveedores"`, `"ley general"`) que decide el namespace antes de buscar.
 
-**Esfuerzo:** 1 día. Relación costo/beneficio: alta.
+**Impacto estimado:** 60% reducción costo Pinecone, 30% reducción latencia.
+**Esfuerzo:** 1 día.
 
-### Mejora 2 — Caché de Embeddings con Supabase (Prioridad Media)
+---
 
-**Problema:** Las 10 preguntas más frecuentes generan embeddings idénticos en cada llamada. El 35-40% de las queries en producción se repiten entre distintas PYMEs consultando el mismo concurso.
+### Mejora 2 — Caché de Embeddings en Supabase (Prioridad Media)
 
-**Solución:** Tabla `embedding_cache` en Supabase con clave `SHA-256(query_text)` y TTL de 24h. Si existe el embedding en caché, se saltea la llamada a OpenAI. Hit rate esperado: 35-40%.
+**Problema:** Las consultas frecuentes sobre el mismo concurso generan embeddings idénticos en cada llamada, pagando innecesariamente a OpenAI por el mismo vector.
 
-**Esfuerzo:** 2 días. Ahorro estimado: ~$0.01 por embedding ahorrado → relevante a escala (>10.000 consultas/mes).
+**Solución:** Tabla `embedding_cache` en Supabase con clave `SHA-256(query_text)` y TTL de 24h. Hit rate esperado: 35-40%.
+
+**Impacto estimado:** Ahorro $0.01 por embedding cacheado, relevante a escala (>10.000 consultas/mes).
+**Esfuerzo:** 2 días.
