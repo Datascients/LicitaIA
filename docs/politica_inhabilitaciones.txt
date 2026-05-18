@@ -1,0 +1,113 @@
+POLÍTICA DE INHABILITACIONES PARA POSTULAR A LICITACIONES PÚBLICAS
+Fuente: Ley 19.886, Art. 4° y Decreto 661/2024
+Fecha de vigencia: 2025-12-31
+Tipo: política_inhabilitaciones
+
+=========================================================
+CAUSALES DE INHABILIDAD ABSOLUTA (Impiden postular)
+=========================================================
+
+Cláusula 1 — Deudas Previsionales
+No podrán contratar con organismos del Estado aquellas empresas
+que registren deudas previsionales o de salud con sus trabajadores,
+conforme al artículo 4° inciso 1° de la Ley 19.886. La verificación
+se realiza a través del sistema de ChileProveedores mediante consulta
+a la Superintendencia de Pensiones y Fonasa/Isapre.
+
+La inhabilitación por deudas previsionales es ABSOLUTA y bloquea
+toda postulación mientras no se regularice. Para regularizar:
+ingresar a www.previred.com, pagar o convenir la deuda, y esperar
+actualización en ChileProveedores (plazo: 2-5 días hábiles).
+
+Cláusula 2 — Deudas Tributarias
+Las empresas con deudas tributarias líquidas, vencidas y exigibles
+ante el SII no pueden postular, según artículo 4° inciso 2° de
+la Ley 19.886. La consulta se efectúa al SII directamente.
+Para regularizar: portal misiigeneralidades.sii.cl o SII presencial.
+
+Cláusula 3 — Condenas por Corrupción
+No pueden postular personas jurídicas o naturales condenadas por
+los delitos previstos en los artículos 250, 251 bis, 287 bis,
+287 ter del Código Penal (cohecho, lavado de activos, financiamiento
+del terrorismo). La inhabilitación persiste por el período que
+determine la sentencia más 5 años adicionales.
+
+Cláusula 4 — Sanciones de la Inspección del Trabajo
+Las empresas multadas por la Dirección del Trabajo (DT) en los
+últimos 24 meses por infracciones graves a la legislación laboral
+quedan inhabilitadas. Se consulta en el Registro de Sanciones
+Laborales disponible en www.dt.gob.cl.
+
+Cláusula 5 — Litigios Activos contra el Estado
+Las empresas que mantengan litigios activos contra el organismo
+licitante o contra el Fisco no pueden postular a concursos de
+ese organismo específico. Inhabilitación parcial, no absoluta.
+Se verifica en el sistema de ChileProveedores bajo el campo
+"litigios con organismos públicos".
+
+Cláusula 6 — Inhabilidades del Artículo 4° Inciso 6°
+Están inhabilidades las personas naturales que sean funcionarios
+directivos del organismo licitante, ni empresas en que aquellos
+tengan participación superior al 10% del capital.
+
+=========================================================
+CAUSALES DE INHABILIDAD CONDICIONAL (Pueden subsanarse)
+=========================================================
+
+Cláusula 7 — No Inscripción en ChileProveedores
+No es causal de rechazo automático antes de adjudicación, pero
+el proveedor debe inscribirse antes de firmar el contrato.
+Plazo de tramitación: 3 a 15 días hábiles dependiendo de la
+documentación presentada. Requisitos mínimos: RUT vigente,
+iniciación de actividades en SII, representante legal identificado,
+declaración jurada de inhabilidades.
+
+Cláusula 8 — Falta de Documentación Obligatoria
+Si la empresa no adjunta los documentos requeridos por las bases
+específicas del concurso en el plazo de postulación, puede ser
+descalificada. Sin embargo, algunos documentos pueden ser
+solicitados como aclaración, salvo que las bases indiquen
+expresamente que su omisión es causal de descalificación.
+
+=========================================================
+PROCEDIMIENTO DE VERIFICACIÓN DE HABILIDAD
+=========================================================
+
+Artículo 9 — Proceso de verificación
+El organismo comprador verifica el estado de habilidad de todos
+los postulantes a través de ChileProveedores ANTES de la apertura
+de ofertas. El estado de habilidad se consulta en tiempo real.
+
+Un proveedor en estado "Hábil" en ChileProveedores tiene:
+- Sin deudas previsionales verificadas
+- Sin deudas tributarias verificadas
+- Sin sanciones laborales graves vigentes
+- Sin condenas por corrupción
+- Inscripción vigente (si aplica)
+
+Artículo 10 — Plazos de regularización
+Una vez verificada una causal de inhabilidad, el organismo comprador
+puede otorgar un plazo de hasta 2 días hábiles para acreditar
+la regularización, salvo que las bases específicas del concurso
+establezcan que la habilidad se verifica al momento de la oferta.
+
+=========================================================
+PREGUNTAS FRECUENTES
+=========================================================
+
+P: ¿Una denuncia laboral me bloquea automáticamente?
+R: No. Solo las MULTAS firmes de la Inspección del Trabajo
+por infracciones graves en los últimos 24 meses inhabilitan.
+Una denuncia en investigación no es causal de inhabilidad,
+pero se recomienda resolverla antes de postular para evitar
+problemas durante la evaluación.
+
+P: ¿Mis deudas previsionales me inhabilitan si estoy pagando?
+R: Si existe un convenio de pago vigente y al día con la AFP,
+ChileProveedores puede reflejar estado "Hábil". Debe acreditar
+el convenio vigente ante el organismo comprador.
+
+P: ¿Puedo postular si tengo deudas tributarias menores?
+R: Las deudas tributarias que no estén vencidas o que estén
+siendo reclamadas judicialmente no inhabilitan. Solo las deudas
+líquidas, vencidas y exigibles constituyen causal.
