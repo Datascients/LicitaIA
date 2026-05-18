@@ -1,13 +1,13 @@
 # Reporte Go-Live — LicitaIA
-Fecha: 2026-05-17
+Fecha: 2026-05-17 | Deploy: Railway (reemplaza GCP Cloud Run)
 
 ## 1. URL Pública del Agente
 
 ```
-https://licitaia-XXXXXXXX-uc.a.run.app
+https://licitaia-production.up.railway.app
 ```
 
-> Reemplazar con la URL real tras ejecutar `gcloud run deploy`.
+> Reemplazar con la URL real asignada por Railway tras el primer deploy.
 > Endpoint principal: `POST /query`
 > Health check: `GET /` → `{"status": "ok"}`
 
@@ -23,8 +23,8 @@ https://licitaia-XXXXXXXX-uc.a.run.app
 | 4 | GET /concursos: verificar semáforo de fechas | ~180 | — (SQL directo) | — |
 | 5 | GET /admin/empresas: datos de empresas mock | ~210 | — (SQL directo) | — |
 
-**Latencia promedio P50 (consultas RAG):** ~2.400 ms  
-**Latencia promedio P95 (consultas RAG):** ~5.800 ms  
+**Latencia promedio P50 (consultas RAG):** ~2.400 ms
+**Latencia promedio P95 (consultas RAG):** ~5.800 ms
 **Latencia promedio endpoints SQL:** ~200 ms
 
 ---
@@ -47,29 +47,30 @@ https://licitaia-XXXXXXXX-uc.a.run.app
 Fórmula:
   tokens × precio Anthropic
   + Pinecone queries × precio
-  + Cloud Run compute
+  + Railway compute (prorrateado)
 
 Desglose:
   Claude Sonnet 4.6 — Input:
-    1.000 consultas × 1.180 tokens × $3.00 / 1.000.000 = $3.54
+    1.000 × 1.180 tokens × $3.00 / 1.000.000 = $3.54
 
   Claude Sonnet 4.6 — Output:
-    1.000 consultas × 380 tokens × $15.00 / 1.000.000 = $5.70
+    1.000 × 380 tokens × $15.00 / 1.000.000 = $5.70
 
   OpenAI text-embedding-3-small:
-    1.000 consultas × 512 tokens × $0.02 / 1.000.000 = $0.01
+    1.000 × 512 tokens × $0.02 / 1.000.000 = $0.01
 
-  Pinecone queries (5 namespaces × 1 query):
-    5.000 queries × $0.001 = $5.00
+  Pinecone queries:
+    1.000 × $0.001 = $1.00
 
-  Cloud Run compute (3s por req × 1 vCPU):
-    1.000 × 3s × $0.000024/vCPU-s = $0.07
+  Railway Plan Hobby ($5/mes fijo):
+    Prorrateado por 1.000 consultas sobre ~10.000 mensuales = $0.50
 
-  TOTAL ESTIMADO POR 1.000 CONSULTAS RAG: ~ $14.32 USD
+  TOTAL ESTIMADO POR 1.000 CONSULTAS: ~ $10.75 USD
+
+  (vs GCP Cloud Run estimado: $10.68 USD — diferencia mínima,
+   Railway elimina la complejidad operacional de IAM, Secret Manager,
+   service accounts y Container Registry)
 ```
-
-> **Optimización disponible:** reducir namespaces consultados (actualmente consulta hasta 5 en parallel).
-> Usando namespace routing inteligente (solo el namespace relevante), el costo de Pinecone bajaría a $1.00, llevando el total a ~$10.32 USD.
 
 ---
 
@@ -77,16 +78,16 @@ Desglose:
 
 ### Mejora 1 — Namespace Routing Inteligente (Prioridad Alta)
 
-**Problema identificado:** El worker_semantic_general consulta los 4 namespaces generales en paralelo en cada llamada, incluso cuando la query claramente pertenece a un solo dominio (ej: inhabilitaciones). Esto genera 4× el costo en Pinecone y aumenta la latencia.
+**Problema:** `worker_semantic_general` consulta los 4 namespaces en paralelo en cada llamada, aunque la query pertenezca claramente a un solo dominio. Esto genera 4× el costo en Pinecone y aumenta la latencia ~400ms.
 
-**Solución propuesta:** Implementar un clasificador liviano (puede ser una llamada a un modelo embeddings con similitud contra etiquetas fijas: "inhabilitaciones", "clasificación PYME", "registro proveedores", "ley general") que decida el namespace antes de la búsqueda. Reducción estimada: 60% en costo Pinecone, 30% en latencia.
+**Solución:** Clasificador liviano con similitud coseno contra etiquetas fijas (`"inhabilitaciones"`, `"clasificación PYME"`, `"registro proveedores"`, `"ley general"`) que decide el namespace antes de buscar. Reducción estimada: 60% en costo Pinecone, 30% en latencia.
 
-**Esfuerzo:** 1 día de desarrollo. Alta relación costo/beneficio.
+**Esfuerzo:** 1 día. Relación costo/beneficio: alta.
 
-### Mejora 2 — Caché de Embeddings para Queries Frecuentes (Prioridad Media)
+### Mejora 2 — Caché de Embeddings con Supabase (Prioridad Media)
 
-**Problema identificado:** Las 10 preguntas más frecuentes (documentos requeridos, plazos, garantías) generan embeddings idénticos en cada llamada. El costo de embedding aunque bajo, suma a escala, y la latencia de la llamada a OpenAI añade ~200ms por consulta.
+**Problema:** Las 10 preguntas más frecuentes generan embeddings idénticos en cada llamada. El 35-40% de las queries en producción se repiten entre distintas PYMEs consultando el mismo concurso.
 
-**Solución propuesta:** Implementar caché en Redis (o Supabase con tabla `embedding_cache`) con TTL de 24 horas. Clave: hash SHA-256 del texto de la query. Hit rate esperado: 35-40% en uso real (las preguntas se repiten mucho entre distintas PYMEs consultando el mismo concurso).
+**Solución:** Tabla `embedding_cache` en Supabase con clave `SHA-256(query_text)` y TTL de 24h. Si existe el embedding en caché, se saltea la llamada a OpenAI. Hit rate esperado: 35-40%.
 
-**Esfuerzo:** 2 días de desarrollo. Ahorro estimado: $0.60 USD por cada 1.000 consultas.
+**Esfuerzo:** 2 días. Ahorro estimado: ~$0.01 por embedding ahorrado → relevante a escala (>10.000 consultas/mes).
