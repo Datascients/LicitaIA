@@ -56,7 +56,7 @@ Las siguientes consultas deben ejecutarse contra `POST /query` con un `empresa_i
 | Tokens input | _291_ |
 | Tokens output | _69_ |
 | Confianza fiscalizador | _1.00_ |
-| Fuente citada | _completar_ |
+| Fuente citada | _null_ |
 
 ---
 
@@ -67,11 +67,11 @@ Las siguientes consultas deben ejecutarse contra `POST /query` con un `empresa_i
 
 | Métrica | Valor |
 |---|---|
-| Latencia (ms) | _completar_ |
-| Tokens input | _completar_ |
-| Tokens output | _completar_ |
-| Confianza fiscalizador | _completar_ |
-| Fuente citada | _completar_ |
+| Latencia (ms) | _6051_ |
+| Tokens input | _1124_ |
+| Tokens output | _371_ |
+| Confianza fiscalizador | _1.00_ |
+| Fuente citada | _POLÍTICA DE INHABILITACIONES - LEY_19886_art4_ |
 
 ---
 
@@ -112,11 +112,11 @@ Las siguientes consultas deben ejecutarse contra `POST /query` con un `empresa_i
 
 | Métrica | Valor |
 |---|---|
-| Latencia (ms) | _completar_ |
-| Tokens input | _completar_ |
-| Tokens output | _completar_ |
-| Confianza fiscalizador | _completar_ |
-| Califica (bool) | _completar_ |
+| Latencia (ms) | _3203_ |
+| Tokens input | _684_ |
+| Tokens output | _108_ |
+| Confianza fiscalizador | _1.00_ |
+| Califica (bool) | _null_ |
 
 ---
 
