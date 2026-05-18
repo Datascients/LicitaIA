@@ -33,8 +33,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_orchestrator = Orchestrator()
-_checklist_worker = WorkerChecklist()
+_orchestrator: Orchestrator | None = None
+_checklist_worker: WorkerChecklist | None = None
+
+
+def get_orchestrator() -> Orchestrator:
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = Orchestrator()
+    return _orchestrator
+
+
+def get_checklist_worker() -> WorkerChecklist:
+    global _checklist_worker
+    if _checklist_worker is None:
+        _checklist_worker = WorkerChecklist()
+    return _checklist_worker
 
 
 # ── Modelos Pydantic ───────────────────────────────────────────────────────
@@ -113,14 +127,14 @@ def query_endpoint(req: QueryRequest):
     """Responde preguntas sobre licitaciones usando el orquestador RAG."""
     if not req.query.strip():
         raise HTTPException(status_code=400, detail="La pregunta no puede estar vacía.")
-    result = _orchestrator.query(req.query, req.empresa_id, req.concurso_id)
+    result = get_orchestrator().query(req.query, req.empresa_id, req.concurso_id)
     return result
 
 
 @app.post("/eligibility")
 def eligibility_endpoint(req: EligibilityRequest):
     """Retorna el checklist completo de elegibilidad de una empresa para un concurso."""
-    result = _checklist_worker.run(req.empresa_id, req.concurso_id)
+    result = get_checklist_worker().run(req.empresa_id, req.concurso_id)
     if not result.get("ok"):
         raise HTTPException(status_code=422, detail=result.get("error", "Error evaluando elegibilidad."))
     return result
