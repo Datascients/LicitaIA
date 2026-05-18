@@ -95,7 +95,6 @@ def bm25_score(query: str, docs: list[dict]) -> list[float]:
 def semantic_search(
     query: str,
     namespaces: list[str],
-    concurso_id: Optional[str] = None,
     k: int = K_RESULTS,
 ) -> list[dict]:
     """
@@ -115,16 +114,11 @@ def semantic_search(
     index = _get_index()
 
     for ns in namespaces:
-        filter_dict: dict = {}
-        if concurso_id:
-            filter_dict["concurso_id"] = {"$eq": concurso_id}
-
         resp = index.query(
             vector=embedding,
             top_k=k * 2,
             namespace=ns,
             include_metadata=True,
-            filter=filter_dict if filter_dict else None,
         )
         for match in resp.matches:
             if match.score >= MIN_SCORE:
@@ -154,7 +148,7 @@ def semantic_search(
 def search_concurso(query: str, concurso_id: str) -> list[dict]:
     """Busca en el namespace del concurso activo."""
     ns = f"bases-concurso-{concurso_id}"
-    return semantic_search(query, [ns], concurso_id=concurso_id)
+    return semantic_search(query, [ns])
 
 
 def search_general(query: str) -> list[dict]:

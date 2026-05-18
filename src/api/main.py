@@ -127,7 +127,10 @@ def query_endpoint(req: QueryRequest):
     """Responde preguntas sobre licitaciones usando el orquestador RAG."""
     if not req.query.strip():
         raise HTTPException(status_code=400, detail="La pregunta no puede estar vacía.")
-    result = get_orchestrator().query(req.query, req.empresa_id, req.concurso_id)
+    try:
+        result = get_orchestrator().query(req.query, req.empresa_id, req.concurso_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return result
 
 
