@@ -52,7 +52,7 @@ Las siguientes consultas deben ejecutarse contra `POST /query` con un `empresa_i
 
 | Métrica | Valor |
 |---|---|
-| Latencia (ms) | _completar_ |
+| Latencia (ms) | _3839m ms_ |
 | Tokens input | _completar_ |
 | Tokens output | _completar_ |
 | Confianza fiscalizador | _completar_ |
