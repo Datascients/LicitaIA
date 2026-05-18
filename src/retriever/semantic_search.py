@@ -118,8 +118,6 @@ def semantic_search(
         filter_dict: dict = {}
         if concurso_id:
             filter_dict["concurso_id"] = {"$eq": concurso_id}
-        # Solo documentos vigentes
-        filter_dict["fecha_vigencia"] = {"$gte": date.today().isoformat()}
 
         resp = index.query(
             vector=embedding,

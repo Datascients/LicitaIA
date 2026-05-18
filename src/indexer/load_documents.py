@@ -37,26 +37,26 @@ FILE_METADATA = {
     "Reglamento de la Ley 19886.pdf": {
         "tipo_documento": "ley",
         "fuente": "ley_19886",
-        "fecha_vigencia": "2025-12-31",
+        "fecha_vigencia": "2027-12-31",
         "seccion": "requisitos_generales",
     },
     "Bases Tipo Adquisición de Vehículos Motorizados.pdf": {
         "tipo_documento": "bases_tecnicas",
         "fuente": "bases_tecnicas_concurso_001.txt",
         "concurso_id": "001",
-        "fecha_vigencia": "2025-12-31",
+        "fecha_vigencia": "2027-12-31",
         "seccion": "bases_especificas",
     },
     "Manual-de-Compras-DCCP.pdf": {
         "tipo_documento": "instructivo",
         "fuente": "chileproveedores",
-        "fecha_vigencia": "2025-12-31",
+        "fecha_vigencia": "2027-12-31",
         "seccion": "registro_proveedores",
     },
     "politica_inhabilitaciones.txt": {
         "tipo_documento": "politica",
         "fuente": "ley_19886_art4",
-        "fecha_vigencia": "2025-12-31",
+        "fecha_vigencia": "2027-12-31",
         "seccion": "inhabilitaciones",
     },
 }
@@ -168,7 +168,7 @@ def load_documents():
         file_meta = FILE_METADATA.get(file_path.name, {
             "tipo_documento": "instructivo",
             "fuente": file_path.name,
-            "fecha_vigencia": "2025-12-31",
+            "fecha_vigencia": "2027-12-31",
             "seccion": "general",
         })
 
