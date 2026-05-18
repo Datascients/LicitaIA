@@ -6,7 +6,7 @@ import os
 import time
 from typing import Optional
 
-import anthropic
+from openai import OpenAI
 from dotenv import load_dotenv
 
 from src.agents.workers.worker_semantic_bases import WorkerSemanticBases
@@ -75,7 +75,7 @@ def _elegir_worker(query: str) -> str:
 
 class Orchestrator:
     def __init__(self):
-        self._client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        self._client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         self._w_bases = WorkerSemanticBases()
         self._w_general = WorkerSemanticGeneral()
         self._w_historial = WorkerSqlHistorial()
@@ -139,16 +139,18 @@ class Orchestrator:
         system_prompt = self._build_system_prompt(empresa, concurso)
         user_message = f"Pregunta del usuario:\n{query}\n\nInformación recuperada:\n{context}"
 
-        response = self._client.messages.create(
-            model="claude-sonnet-4-6",
+        response = self._client.chat.completions.create(
+            model="gpt-4o",
             max_tokens=1024,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
         )
 
-        respuesta_text = response.content[0].text
-        tokens_in = response.usage.input_tokens
-        tokens_out = response.usage.output_tokens
+        respuesta_text = response.choices[0].message.content
+        tokens_in = response.usage.prompt_tokens
+        tokens_out = response.usage.completion_tokens
 
         # Fiscalizar
         fisco = fiscalizar(query, respuesta_text, chunks)

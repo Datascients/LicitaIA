@@ -6,6 +6,7 @@ import os
 import re
 import json
 import time
+import unicodedata
 from pathlib import Path
 from datetime import date
 
@@ -33,40 +34,20 @@ NAMESPACE_MAP = {
 
 # Metadatos por archivo fuente
 FILE_METADATA = {
-    "bases_generales_licitacion.pdf": {
+    "Reglamento de la Ley 19886.pdf": {
         "tipo_documento": "ley",
         "fuente": "ley_19886",
         "fecha_vigencia": "2025-12-31",
         "seccion": "requisitos_generales",
     },
-    "requisitos_pyme_ley20416.pdf": {
-        "tipo_documento": "ley",
-        "fuente": "ley_20416",
-        "fecha_vigencia": "2025-12-31",
-        "seccion": "clasificacion_pyme",
-    },
-    "bases_tecnicas_concurso_001.txt": {
+    "Bases Tipo Adquisición de Vehículos Motorizados.pdf": {
         "tipo_documento": "bases_tecnicas",
         "fuente": "bases_tecnicas_concurso_001.txt",
         "concurso_id": "001",
         "fecha_vigencia": "2025-12-31",
         "seccion": "bases_especificas",
     },
-    "bases_tecnicas_concurso_002.txt": {
-        "tipo_documento": "bases_tecnicas",
-        "fuente": "bases_tecnicas_concurso_002.txt",
-        "concurso_id": "002",
-        "fecha_vigencia": "2025-12-31",
-        "seccion": "bases_especificas",
-    },
-    "bases_tecnicas_concurso_003.txt": {
-        "tipo_documento": "bases_tecnicas",
-        "fuente": "bases_tecnicas_concurso_003.txt",
-        "concurso_id": "003",
-        "fecha_vigencia": "2025-12-31",
-        "seccion": "bases_especificas",
-    },
-    "registro_proveedores_requisitos.pdf": {
+    "Manual-de-Compras-DCCP.pdf": {
         "tipo_documento": "instructivo",
         "fuente": "chileproveedores",
         "fecha_vigencia": "2025-12-31",
@@ -135,12 +116,12 @@ def read_document(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".txt":
         return path.read_text(encoding="utf-8", errors="ignore")
-    # Para PDFs y DOCX en producción usar pdfplumber / python-docx.
-    # Aquí usamos el texto del placeholder si existe como .txt compañero.
-    txt_companion = path.with_suffix(".txt")
-    if txt_companion.exists():
-        return txt_companion.read_text(encoding="utf-8", errors="ignore")
-    return f"[Contenido de {path.name} — cargar documento real en producción]"
+    if suffix == ".pdf":
+        from pypdf import PdfReader
+        reader = PdfReader(str(path))
+        pages = [page.extract_text() or "" for page in reader.pages]
+        return "\n\n".join(p for p in pages if p.strip())
+    return f"[Formato no soportado: {path.name}]"
 
 
 def get_namespace(meta: dict) -> str:
@@ -164,7 +145,7 @@ def embed_batch(client: OpenAI, texts: list[str]) -> list[list[float]]:
 
 
 def load_documents():
-    openai_client = OpenAI(api_key=os.environ["ANTHROPIC_API_KEY"] if False else os.environ.get("OPENAI_API_KEY", os.environ.get("ANTHROPIC_API_KEY")))
+    openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
     if INDEX_NAME not in pc.list_indexes().names():
@@ -195,7 +176,7 @@ def load_documents():
         chunks = chunk_by_clause(text)
         namespace = get_namespace(file_meta)
 
-        print(f"\n📄 {file_path.name} → {len(chunks)} chunks → ns:{namespace}")
+        print(f"\n[DOC] {file_path.name} -> {len(chunks)} chunks -> ns:{namespace}")
 
         texts = [c["text"] for c in chunks]
         vectors = []
@@ -212,7 +193,9 @@ def load_documents():
                     "fecha_indexacion": today,
                     "text": chunk["text"][:1000],  # Pinecone metadata limit
                 }
-                vid = f"{file_path.stem}__chunk_{chunk['chunk_index']}"
+                stem_ascii = unicodedata.normalize("NFKD", file_path.stem).encode("ascii", "ignore").decode("ascii")
+                stem_ascii = re.sub(r"[^A-Za-z0-9_\-]", "_", stem_ascii)
+                vid = f"{stem_ascii}__chunk_{chunk['chunk_index']}"
                 vectors.append({"id": vid, "values": emb, "metadata": meta})
 
         # Subir en batches de 100
@@ -220,9 +203,9 @@ def load_documents():
             index.upsert(vectors=vectors[i : i + BATCH_SIZE], namespace=namespace)
 
         total_chunks += len(chunks)
-        print(f"   ✅ {len(chunks)} chunks subidos")
+        print(f"   OK {len(chunks)} chunks subidos")
 
-    print(f"\n🎉 Indexación completada. Total chunks: {total_chunks}")
+    print(f"\nIndexacion completada. Total chunks: {total_chunks}")
 
 
 if __name__ == "__main__":

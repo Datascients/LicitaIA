@@ -38,7 +38,7 @@ def _get_index():
 def _get_openai():
     global _openai
     if _openai is None:
-        _openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", os.environ.get("ANTHROPIC_API_KEY")))
+        _openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     return _openai
 
 
