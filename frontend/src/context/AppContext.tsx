@@ -27,12 +27,14 @@ export interface EmpresaForm {
   cargoRepLegal: string;
   estadoPrimerFiltro: 'califica' | 'no_califica' | 'pendiente';
   scoreCompletitud: number;
+  fechaRegistro?: string;
 }
 
 interface AppContextType {
   role: Role;
   user: UserProfile | null;
   empresa: EmpresaForm | null;
+  allEmpresas: EmpresaForm[];
   login: (role: NonNullable<Role>, user: UserProfile) => void;
   logout: () => void;
   updateEmpresa: (empresa: EmpresaForm) => void;
@@ -41,6 +43,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 const storageKey = (email: string) => `licitaia_empresa_${email}`;
+const REGISTRY_KEY = 'licitaia_registro';
 
 function loadEmpresaFromStorage(email: string): EmpresaForm | null {
   try {
@@ -51,10 +54,29 @@ function loadEmpresaFromStorage(email: string): EmpresaForm | null {
   }
 }
 
+function loadRegistry(): EmpresaForm[] {
+  try {
+    const raw = localStorage.getItem(REGISTRY_KEY);
+    return raw ? (JSON.parse(raw) as EmpresaForm[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToRegistry(emp: EmpresaForm): EmpresaForm[] {
+  const registry = loadRegistry();
+  const idx = registry.findIndex(e => e.id === emp.id);
+  if (idx >= 0) registry[idx] = emp;
+  else registry.push(emp);
+  localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+  return registry;
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [empresa, setEmpresa] = useState<EmpresaForm | null>(null);
+  const [allEmpresas, setAllEmpresas] = useState<EmpresaForm[]>(() => loadRegistry());
   const emailRef = useRef<string | null>(null);
 
   const login = (r: NonNullable<Role>, u: UserProfile) => {
@@ -63,6 +85,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     emailRef.current = u.email;
     const saved = loadEmpresaFromStorage(u.email);
     setEmpresa(saved);
+    setAllEmpresas(loadRegistry());
   };
 
   const logout = () => {
@@ -73,14 +96,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateEmpresa = (emp: EmpresaForm) => {
-    setEmpresa(emp);
+    const empWithDate = emp.fechaRegistro ? emp : { ...emp, fechaRegistro: new Date().toISOString() };
+    setEmpresa(empWithDate);
     if (emailRef.current) {
-      localStorage.setItem(storageKey(emailRef.current), JSON.stringify(emp));
+      localStorage.setItem(storageKey(emailRef.current), JSON.stringify(empWithDate));
     }
+    setAllEmpresas(saveToRegistry(empWithDate));
   };
 
   return (
-    <AppContext.Provider value={{ role, user, empresa, login, logout, updateEmpresa }}>
+    <AppContext.Provider value={{ role, user, empresa, allEmpresas, login, logout, updateEmpresa }}>
       {children}
     </AppContext.Provider>
   );

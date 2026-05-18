@@ -1,12 +1,47 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Users, BarChart3, FileText, CheckCircle2, XCircle, AlertCircle, Send, Search, Clock, TrendingUp, Building2, ChevronRight } from 'lucide-react';
 import SemaforoTag from '../components/SemaforoTag';
 import ChecklistRow from '../components/ChecklistRow';
 import { concursos, empresasMock, type MockEmpresa } from '../data/mockData';
+import { useApp, type EmpresaForm } from '../context/AppContext';
 
 type Tab = 'dashboard' | 'pymes' | 'concursos' | 'metricas';
 
+function empresaFormToMock(e: EmpresaForm): MockEmpresa {
+  return {
+    id: e.id,
+    rut: e.rut,
+    razonSocial: e.razonSocial,
+    giro: e.giro,
+    clasificacionPyme: e.clasificacionPyme,
+    ventasUf: e.ventasUf,
+    numTrabajadores: e.numTrabajadores,
+    tieneDeudaPrevisional: e.tieneDeudaPrevisional,
+    tieneDeudaTributaria: e.tieneDeudaTributaria,
+    tieneDenunciaLaboral: e.tieneDenunciaLaboral,
+    tieneLitigioProveedor: e.tieneLitigioProveedor,
+    inscritaChileProveedores: e.inscritaChileProveedores,
+    estadoPrimerFiltro: e.estadoPrimerFiltro,
+    scoreCompletitud: e.scoreCompletitud,
+    certificaciones: e.certificaciones,
+    repLegal: e.repLegal,
+    cargoRepLegal: e.cargoRepLegal,
+    fechaRegistro: e.fechaRegistro ? new Date(e.fechaRegistro) : new Date(),
+  };
+}
+
 export default function AdminPanel() {
+  const { allEmpresas } = useApp();
+
+  const todasEmpresas = useMemo<MockEmpresa[]>(() => {
+    const fromContext = allEmpresas.map(empresaFormToMock);
+    const mockIds = new Set(empresasMock.map(e => e.id));
+    const contextIds = new Set(fromContext.map(e => e.id));
+    const mockSinDuplicar = empresasMock.filter(e => !contextIds.has(e.id));
+    const contextSinDuplicar = fromContext.filter(e => !mockIds.has(e.id));
+    return [...mockSinDuplicar, ...contextSinDuplicar];
+  }, [allEmpresas]);
+
   const [tab, setTab] = useState<Tab>('dashboard');
   const [empresaSel, setEmpresaSel] = useState<MockEmpresa | null>(null);
   const [feedback, setFeedback] = useState('');
@@ -15,19 +50,19 @@ export default function AdminPanel() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos');
 
-  const empresasFiltradas = empresasMock.filter(e => {
+  const empresasFiltradas = todasEmpresas.filter(e => {
     const matchBusq = e.razonSocial.toLowerCase().includes(busqueda.toLowerCase()) || e.rut.includes(busqueda);
     const matchFiltro = filtroEstado === 'todos' || e.estadoPrimerFiltro === filtroEstado;
     return matchBusq && matchFiltro;
   });
 
   const metricas = {
-    total: empresasMock.length,
-    califican: empresasMock.filter(e => e.estadoPrimerFiltro === 'califica').length,
-    noCalifican: empresasMock.filter(e => e.estadoPrimerFiltro === 'no_califica').length,
+    total: todasEmpresas.length,
+    califican: todasEmpresas.filter(e => e.estadoPrimerFiltro === 'califica').length,
+    noCalifican: todasEmpresas.filter(e => e.estadoPrimerFiltro === 'no_califica').length,
     postulaciones: 4,
     consultasHoy: 47,
-    tasa: Math.round((empresasMock.filter(e => e.estadoPrimerFiltro === 'califica').length / empresasMock.length) * 100),
+    tasa: todasEmpresas.length > 0 ? Math.round((todasEmpresas.filter(e => e.estadoPrimerFiltro === 'califica').length / todasEmpresas.length) * 100) : 0,
   };
 
   const enviarFeedback = () => {
@@ -97,7 +132,7 @@ export default function AdminPanel() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2"><Clock size={16} className="text-navy" /> Últimos registros</h3>
                 <div className="space-y-3">
-                  {empresasMock.map(e => (
+                  {todasEmpresas.map(e => (
                     <div key={e.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors" onClick={() => { setEmpresaSel(e); setTab('pymes'); }}>
                       <div className="w-8 h-8 bg-navy/8 text-navy rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0">
                         {e.razonSocial[0]}
@@ -351,9 +386,9 @@ export default function AdminPanel() {
                 { label: 'Tasa calificación primer filtro', value: `${metricas.tasa}%`, desc: `${metricas.califican} de ${metricas.total} PYMEs califican`, color: 'bg-emerald-50 text-emerald-700' },
                 { label: 'Postulaciones activas', value: String(metricas.postulaciones), desc: 'En alguna etapa del proceso', color: 'bg-blue-50 text-blue-700' },
                 { label: 'Consultas LicitaBot hoy', value: String(metricas.consultasHoy), desc: 'Promedio diario: 32 consultas', color: 'bg-purple-50 text-purple-700' },
-                { label: 'PYMEs registradas', value: String(metricas.total), desc: 'Crecimiento mes: +2 nuevas', color: 'bg-navy/8 text-navy' },
-                { label: 'Con deuda previsional', value: '1', desc: '33% del total registrado', color: 'bg-red-50 text-red-700' },
-                { label: 'Checklists completados', value: '2', desc: '50% completaron el proceso', color: 'bg-amber-50 text-amber-700' },
+                { label: 'PYMEs registradas', value: String(metricas.total), desc: `Total acumulado en plataforma`, color: 'bg-navy/8 text-navy' },
+                { label: 'Con deuda previsional', value: String(todasEmpresas.filter(e => e.tieneDeudaPrevisional).length), desc: `${todasEmpresas.length > 0 ? Math.round((todasEmpresas.filter(e => e.tieneDeudaPrevisional).length / todasEmpresas.length) * 100) : 0}% del total registrado`, color: 'bg-red-50 text-red-700' },
+                { label: 'Checklists completados', value: String(todasEmpresas.filter(e => e.scoreCompletitud >= 80).length), desc: `${todasEmpresas.length > 0 ? Math.round((todasEmpresas.filter(e => e.scoreCompletitud >= 80).length / todasEmpresas.length) * 100) : 0}% completaron el proceso`, color: 'bg-amber-50 text-amber-700' },
               ].map((m, i) => (
                 <div key={i} className={`${m.color} rounded-2xl p-5`}>
                   <div className="text-3xl font-bold mb-1">{m.value}</div>
