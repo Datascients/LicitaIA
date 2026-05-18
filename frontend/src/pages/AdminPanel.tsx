@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Users, BarChart3, FileText, CheckCircle2, XCircle, AlertCircle, Send, Search, Clock, TrendingUp, Building2, ChevronRight } from 'lucide-react';
 import SemaforoTag from '../components/SemaforoTag';
 import ChecklistRow from '../components/ChecklistRow';
 import { concursos, empresasMock, type MockEmpresa } from '../data/mockData';
-import { useApp, type EmpresaForm } from '../context/AppContext';
+import { useApp, type EmpresaForm, type AdminMensaje } from '../context/AppContext';
 
 type Tab = 'dashboard' | 'pymes' | 'concursos' | 'metricas';
 
@@ -31,7 +31,7 @@ function empresaFormToMock(e: EmpresaForm): MockEmpresa {
 }
 
 export default function AdminPanel() {
-  const { allEmpresas } = useApp();
+  const { allEmpresas, enviarMensaje } = useApp();
 
   const todasEmpresas = useMemo<MockEmpresa[]>(() => {
     const fromContext = allEmpresas.map(empresaFormToMock);
@@ -45,7 +45,7 @@ export default function AdminPanel() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const [empresaSel, setEmpresaSel] = useState<MockEmpresa | null>(null);
   const [feedback, setFeedback] = useState('');
-  const [feedbackTipo, setFeedbackTipo] = useState<'informativo' | 'alerta' | 'urgente'>('informativo');
+  const [feedbackTipo, setFeedbackTipo] = useState<AdminMensaje['tipo']>('informativo');
   const [feedbackEnviado, setFeedbackEnviado] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -65,12 +65,13 @@ export default function AdminPanel() {
     tasa: todasEmpresas.length > 0 ? Math.round((todasEmpresas.filter(e => e.estadoPrimerFiltro === 'califica').length / todasEmpresas.length) * 100) : 0,
   };
 
-  const enviarFeedback = () => {
-    if (!feedback.trim()) return;
+  const enviarFeedback = useCallback(() => {
+    if (!feedback.trim() || !empresaSel) return;
+    enviarMensaje(empresaSel.id, feedbackTipo, feedback.trim());
     setFeedbackEnviado(true);
     setFeedback('');
     setTimeout(() => setFeedbackEnviado(false), 3000);
-  };
+  }, [feedback, feedbackTipo, empresaSel, enviarMensaje]);
 
   const TABS = [
     { key: 'dashboard' as Tab, icon: <BarChart3 size={15} />, label: 'Dashboard' },

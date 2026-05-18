@@ -1,14 +1,20 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CheckCircle2, XCircle, Bell, ArrowRight, TrendingUp, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Bell, ArrowRight, TrendingUp, FileText, AlertTriangle, Info } from 'lucide-react';
 import SemaforoTag from '../components/SemaforoTag';
 import { concursos, empresasMock, postulacionesMock, ETAPAS, diasRestantes } from '../data/mockData';
 
 const ETAPA_LABELS = ETAPAS;
 
 export default function Dashboard() {
-  const { empresa, user } = useApp();
+  const { empresa, user, mensajesEmpresa, marcarLeido } = useApp();
   const navigate = useNavigate();
+
+  // Marcar como leídos los mensajes no leídos al entrar al dashboard
+  useEffect(() => {
+    mensajesEmpresa.filter(m => !m.leido).forEach(m => marcarLeido(m.id));
+  }, [mensajesEmpresa.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const empresaActiva = empresa ?? {
     razonSocial: empresasMock[0].razonSocial,
@@ -74,15 +80,47 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Alerta admin */}
-        {empresasMock[0].feedbackAdmin && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-start gap-3">
-            <Bell size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-800">Mensaje del administrador</p>
-              <p className="text-sm text-amber-700 mt-0.5">{empresasMock[0].feedbackAdmin}</p>
-            </div>
-          </div>
+        {/* Mensajes del administrador */}
+        {mensajesEmpresa.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="font-display text-lg font-semibold text-navy flex items-center gap-2">
+              <Bell size={18} /> Mensajes del administrador
+              {mensajesEmpresa.filter(m => !m.leido).length > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {mensajesEmpresa.filter(m => !m.leido).length} nuevo{mensajesEmpresa.filter(m => !m.leido).length > 1 ? 's' : ''}
+                </span>
+              )}
+            </h2>
+            {[...mensajesEmpresa].reverse().map(msg => {
+              const esUrgente = msg.tipo === 'urgente';
+              const esAlerta = msg.tipo === 'alerta';
+              const bgColor = esUrgente ? 'bg-red-50 border-red-200' : esAlerta ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200';
+              const textColor = esUrgente ? 'text-red-800' : esAlerta ? 'text-amber-800' : 'text-blue-800';
+              const subColor = esUrgente ? 'text-red-700' : esAlerta ? 'text-amber-700' : 'text-blue-700';
+              const icon = esUrgente
+                ? <AlertTriangle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                : esAlerta
+                ? <Bell size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                : <Info size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />;
+              return (
+                <div key={msg.id} className={`border rounded-2xl px-5 py-4 flex items-start gap-3 ${bgColor} ${!msg.leido ? 'ring-2 ring-offset-1 ring-current/20' : 'opacity-80'}`}>
+                  {icon}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <p className={`text-sm font-semibold ${textColor}`}>
+                        {esUrgente ? '🚨 Urgente' : esAlerta ? '⚠️ Alerta' : 'ℹ️ Informativo'}
+                        {!msg.leido && <span className="ml-2 text-xs font-bold uppercase tracking-wide">Nuevo</span>}
+                      </p>
+                      <span className={`text-xs ${subColor} opacity-70 flex-shrink-0`}>
+                        {new Date(msg.fecha).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${subColor}`}>{msg.texto}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
         )}
 
         {/* Licitaciones disponibles */}
