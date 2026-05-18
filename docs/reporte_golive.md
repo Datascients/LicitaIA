@@ -50,13 +50,11 @@ Consultas ejecutadas contra `POST /query` en producción con empresa `TecnoServ 
 
 | Métrica | Valor |
 |---|---|
-| Worker usado | worker_semantic_bases |
-| Latencia (ms) | 2.726 |
-| Tokens input | 291 |
-| Tokens output | 73 |
-| Confianza fiscalizador | 1.00 |
-| Fiscalizador OK | true |
-| Fuente citada | — |
+| Latencia (ms) | _5857m ms_ |
+| Tokens input | _291_ |
+| Tokens output | _69_ |
+| Confianza fiscalizador | _1.00_ |
+| Fuente citada | _null_ |
 
 ---
 
@@ -65,13 +63,11 @@ Consultas ejecutadas contra `POST /query` en producción con empresa `TecnoServ 
 
 | Métrica | Valor |
 |---|---|
-| Worker usado | worker_semantic_general |
-| Latencia (ms) | 6.051 |
-| Tokens input | 1.124 |
-| Tokens output | 371 |
-| Confianza fiscalizador | 1.00 |
-| Fiscalizador OK | true |
-| Fuente citada | POLÍTICA DE INHABILITACIONES — ley_19886_art4 |
+| Latencia (ms) | _6051_ |
+| Tokens input | _1124_ |
+| Tokens output | _371_ |
+| Confianza fiscalizador | _1.00_ |
+| Fuente citada | _POLÍTICA DE INHABILITACIONES - LEY_19886_art4_ |
 
 ---
 
@@ -80,13 +76,11 @@ Consultas ejecutadas contra `POST /query` en producción con empresa `TecnoServ 
 
 | Métrica | Valor |
 |---|---|
-| Worker usado | worker_sql_historial |
-| Latencia (ms) | 3.203 |
-| Tokens input | 685 |
-| Tokens output | 277 |
-| Confianza fiscalizador | 1.00 |
-| Fiscalizador OK | true |
-| Fuente citada | — (consulta Supabase) |
+| Latencia (ms) | _3203_ |
+| Tokens input | _684_ |
+| Tokens output | _108_ |
+| Confianza fiscalizador | _1.00_ |
+| Califica (bool) | _null_ |
 
 ---
 
